@@ -1,7 +1,7 @@
 # SkillVouch AI - Quiz Generation Platform
 
 <div align="center">
-  <img src="public/skillvouch-logo.jpg" alt="SkillVouch AI Logo" width="200" height="200">
+  <img src="SkillVouch Logo.jpg" alt="SkillVouch AI Logo" width="200" height="200">
 </div>
 
 An AI-powered quiz generation platform that creates personalized assessments based on user skills and requirements.
