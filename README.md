@@ -1,7 +1,7 @@
 # SkillVouch AI - Quiz Generation Platform
 
 <div align="center">
-  <img src="SkillVouch Logo.jpg" alt="SkillVouch AI Logo" width="200" height="200">
+  <img src="SkillVouch Logo.jpg" alt="SkillVouch AI Logo" width="400" height="400">
 </div>
 
 An AI-powered quiz generation platform that creates personalized assessments based on user skills and requirements.
@@ -18,7 +18,7 @@ An AI-powered quiz generation platform that creates personalized assessments bas
 
 - **Frontend:** React 19, TypeScript, Vite, Tailwind CSS
 - **Backend:** Node.js, Express.js
-- **AI Services:** Mistral AI, OpenRouter (Llama 3.3 70B)
+- **AI Services:** Mistral AI
 - **Database:** MySQL
 - **Icons:** Lucide React
 - **Charts:** Recharts
@@ -26,12 +26,11 @@ An AI-powered quiz generation platform that creates personalized assessments bas
 ## 📋 Prerequisites
 
 - Node.js (v18 or higher)
-- npm or yarn
+- npm 
 - MySQL database
 - Mistral AI API key
-- OpenRouter API key (optional, for Llama 3.3 70B)
 
-## 🚀 Quick Start
+##🚀 Quick Start
 
 1. **Clone the repository:**
    ```bash
