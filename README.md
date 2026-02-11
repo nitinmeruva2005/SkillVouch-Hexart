@@ -1,10 +1,10 @@
 # SkillVouch AI - Quiz Generation Platform
 
 <div align="center">
-  <img src="SkillVouch Logo.jpg" alt="SkillVouch AI Logo" width="400" height="400">
+  <img src="SkillVouch Logo.jpg" alt="SkillVouch AI Logo" width="600" height="400">
 </div>
 
-An AI-powered quiz generation platform that creates personalized assessments based on user skills and requirements.
+An AI-powered quiz generation platform that creates personalized assessments based on user skills and requirements.Works seamlessly on **MacOS,Windows,Linux**
 
 ## 🚀 Features
 
@@ -50,9 +50,8 @@ An AI-powered quiz generation platform that creates personalized assessments bas
    
    # Edit backend/.env and add your API keys:
    MISTRAL_API_KEY=your-mistral-api-key-here
-   VITE_OPENROUTER_API_KEY=your-openrouter-api-key-here
-   LLAMA_API_KEY=your-openrouter-api-key-here
-   
+
+
    # Configure database
    DB_HOST=localhost
    DB_USER=root
@@ -61,8 +60,85 @@ An AI-powered quiz generation platform that creates personalized assessments bas
    ```
 
 4. **Set up your database:**
-   - Create a MySQL database named `skillvouch`
-   - Import the database schema (if available)
+
+   **For macOS:**
+   ```bash
+   # Install MySQL
+   brew install mysql
+   
+   # Start MySQL service
+   brew services start mysql
+   
+   # Login to MySQL
+   mysql -u root -p
+   
+   # Create database
+   CREATE DATABASE skillvouch;
+   
+   # Import the schema
+   USE skillvouch;
+   SOURCE backend/sql/schema.sql;
+   ```
+   
+   **For Windows:**
+   ```bash
+   # Download and install MySQL from: https://dev.mysql.com/downloads/mysql/
+   # During installation, set root password and note it down
+   
+   # Open MySQL Command Line Client (from Start Menu)
+   # Enter your root password when prompted
+   
+   # Create database
+   CREATE DATABASE skillvouch;
+   
+   # Import the schema
+   USE skillvouch;
+   SOURCE C:/path/to/your/project/backend/sql/schema.sql;
+   ```
+
+   **For Linux (Ubuntu/Debian):**
+   ```bash
+   # Install MySQL
+   sudo apt update
+   sudo apt install mysql-server
+   
+   # Start MySQL service
+   sudo systemctl start mysql
+   sudo systemctl enable mysql
+   
+   # Secure MySQL (optional but recommended)
+   sudo mysql_secure_installation
+   
+   # Login to MySQL
+   sudo mysql -u root -p
+   
+   # Create database
+   CREATE DATABASE skillvouch;
+   
+   # Import the schema
+   USE skillvouch;
+   SOURCE /path/to/your/project/backend/sql/schema.sql;
+   ```
+
+   **For Linux (Fedora/CentOS):**
+   ```bash
+   # Install MySQL
+   sudo dnf install mysql-server
+   
+   # Start MySQL service
+   sudo systemctl start mysqld
+   sudo systemctl enable mysqld
+   
+   # Login to MySQL
+   sudo mysql -u root -p
+   
+   # Create database
+   CREATE DATABASE skillvouch;
+   
+   # Import the schema
+   USE skillvouch;
+   SOURCE /path/to/your/project/backend/sql/schema.sql;
+   ```
 
 5. **Run the application:**
    ```bash
@@ -85,10 +161,6 @@ An AI-powered quiz generation platform that creates personalized assessments bas
 1. **Mistral AI API Key:**
    - Get your key from: https://console.mistral.ai/
    - Used for quiz generation
-
-2. **OpenRouter API Key (Optional):**
-   - Get your free key from: https://openrouter.ai/settings/keys
-   - Provides access to Llama 3.3 70B with generous free limits
 
 ### Database Configuration
 
@@ -115,4 +187,4 @@ If you encounter any issues or have questions, please:
 
 ---
 
-**Note:** This project uses AI services that may require API keys with associated costs. Please check the pricing details for each service before usage.
+
