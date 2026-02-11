@@ -141,12 +141,17 @@ An AI-powered quiz generation platform that creates personalized assessments bas
    ```
 
 5. **Run the application:**
+ 
+   **Start the backend server:**
+   ```bash
+   cd backend
+   node server.js
+   ```
+   
+   **Start the frontend (in a new terminal):**
    ```bash
    npm run dev
    ```
-
-   The frontend will be available at `http://localhost:5173`
-   The backend API will be available at `http://localhost:3000`
 
 ## 🔧 Available Scripts
 
