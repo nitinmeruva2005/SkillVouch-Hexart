@@ -36,7 +36,9 @@ export default async function handler(req, res) {
         user: process.env.MYSQL_USER || 'root',
         password: process.env.MYSQL_PASSWORD || '',
         database: process.env.MYSQL_DATABASE || 'skillvouch',
-        ssl: process.env.MYSQL_HOST?.includes('railway.app') || process.env.MYSQL_HOST?.includes('planetscale') 
+        ssl: process.env.MYSQL_HOST?.includes('railway.app') || 
+              process.env.MYSQL_HOST?.includes('planetscale') ||
+              process.env.MYSQL_HOST?.includes('clever-cloud.com')
           ? { rejectUnauthorized: false } 
           : false
       };
