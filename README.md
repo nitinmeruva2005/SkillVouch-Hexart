@@ -300,10 +300,10 @@ MYSQL_DATABASE=railway
 | `MYSQL_PASSWORD` | Your password | `AbCdEfGhIjKlMnOp` |
 | `MYSQL_DATABASE` | Database name | `railway` |
 
-#### **Step 6: Deploy to Vercel**
-1. Commit your changes: `git add . && git commit -m "Add database config"`
-2. Push to GitHub: `git push origin main`
-3. Wait for Vercel to redeploy (2-3 minutes)
+#### **Step 6: Deploy**
+1. Click "Deploy" button
+2. Wait for build to complete (2-3 minutes)
+3. Your app is now live! 🎉
 
 #### **Step 7: Test Database Connection**
 1. Visit your app: `https://skillvouch-hexart.vercel.app`

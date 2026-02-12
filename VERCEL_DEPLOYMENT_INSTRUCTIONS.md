@@ -6,7 +6,7 @@ Your project is now fully configured for Vercel serverless deployment with MySQL
 
 ## 📋 Prerequisites
 
-1. **MySQL Database** (Railway, PlanetScale, or any cloud MySQL)
+1. **MySQL Database** (any cloud MySQL provider)
 2. **Vercel Account** (free)
 3. **GitHub Repository** (already done)
 
@@ -14,17 +14,14 @@ Your project is now fully configured for Vercel serverless deployment with MySQL
 
 ### Step 1: Get Your Database URL
 
-**For Railway MySQL:**
-1. Go to Railway dashboard
-2. Click your MySQL database
-3. Go to "Connect" tab
-4. Copy the connection string (looks like: `mysql://user:password@host:port/database`)
+**For Any MySQL Provider:**
+1. Get your MySQL connection string
+2. Format should be: `mysql://username:password@host:port/database_name`
 
-**For PlanetScale:**
-1. Go to PlanetScale dashboard
-2. Click your database
-3. Go to "Connect" → "Connect with"
-4. Copy the connection string
+**Example formats:**
+- AWS RDS: `mysql://admin:password@mydb.c123abc.us-east-1.rds.amazonaws.com:3306/skillvouch`
+- DigitalOcean: `mysql://doadmin:password@db-mysql-nyc1-12345-do-user-1234567-0.db.ondigitalocean.com:25060/skillvouch`
+- Local MySQL: `mysql://root:password@localhost:3306/skillvouch`
 
 ### Step 2: Add DATABASE_URL to Vercel
 
@@ -33,7 +30,7 @@ Your project is now fully configured for Vercel serverless deployment with MySQL
 3. Go to "Settings" → "Environment Variables"
 4. Add new variable:
    - **Name:** `DATABASE_URL`
-   - **Value:** `mysql://user:password@host:port/database`
+   - **Value:** `mysql://username:password@host:port/database_name`
    - **Environments:** Production, Preview, Development
 
 ### Step 3: Add API Keys (Optional)
@@ -79,9 +76,10 @@ vercel --prod
 ## 🔍 Troubleshooting
 
 ### Database Connection Failed
-- Check `DATABASE_URL` is correct
-- Ensure database is running (not paused)
-- Verify SSL settings
+- Check `DATABASE_URL` format is correct
+- Ensure database is running and accessible
+- Verify username, password, host, and port
+- Check if SSL is required by your MySQL provider
 
 ### 404 Errors
 - Check all API files are in `/api` folder
