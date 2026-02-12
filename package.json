@@ -13,6 +13,7 @@
     "@langchain/mistralai": "^1.0.2",
     "@llama-node/core": "^0.1.6",
     "@llama-node/llama-cpp": "^0.1.6",
+    "dotenv": "^17.2.4",
     "firebase": "^12.6.0",
     "firebase-tools": "^14.27.0",
     "lucide-react": "^0.556.0",
