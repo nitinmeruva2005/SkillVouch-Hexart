@@ -69,12 +69,12 @@ export const apiService = {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Login failed');
+      throw new Error(error.message || 'Login failed');
     }
 
     const data = await response.json();
     if (!data.success) {
-      throw new Error(data.error || 'Login failed');
+      throw new Error(data.message || 'Login failed');
     }
 
     // Save user to session (no token)
@@ -91,12 +91,12 @@ export const apiService = {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || 'Signup failed');
+      throw new Error(error.message || 'Signup failed');
     }
 
     const data = await response.json();
     if (!data.success) {
-      throw new Error(data.error || 'Signup failed');
+      throw new Error(data.message || 'Signup failed');
     }
 
     // Save user to session (no token)
@@ -117,7 +117,7 @@ export const apiService = {
       apiService.setSession(data.user);
       return data.user;
     }
-    throw new Error(data.error || 'Failed to fetch profile');
+    throw new Error(data.message || 'Failed to fetch profile');
   },
 
   updateUserProfile: async (updates: Partial<User>): Promise<User> => {
@@ -134,7 +134,7 @@ export const apiService = {
       apiService.setSession(data.user);
       return data.user;
     }
-    throw new Error(data.error || 'Failed to update profile');
+    throw new Error(data.message || 'Failed to update profile');
   },
 
   addSkill: async (skill: string): Promise<string[]> => {
