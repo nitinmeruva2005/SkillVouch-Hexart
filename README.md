@@ -63,11 +63,7 @@ This project is designed to work on:
    LLAMA_API_KEY=your-openrouter-api-key-here
    
    # Configure database
-   MYSQL_HOST=localhost
-   MYSQL_PORT=3306
-   MYSQL_USER=root
-   MYSQL_PASSWORD=your-password
-   MYSQL_DATABASE=skillvouch
+   
    ```
 
 4. **Set up your database:**
