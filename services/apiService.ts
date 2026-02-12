@@ -71,10 +71,10 @@ export const apiService = {
 
   saveUser: async (user: User) => {
     // No delay for save operations to make them feel instant
-    const response = await fetch(`${API_BASE_URL}/users/${user.id}`, {
+    const response = await fetch(`${API_BASE_URL}/users`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(user)
+      body: JSON.stringify(user)  // ID is now in body, not URL
     });
     if (!response.ok) throw new Error('Failed to save user');
     
