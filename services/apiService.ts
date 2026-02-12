@@ -3,8 +3,7 @@ import { suggestSkillsDirect, generateRoadmapDirect } from './mistralDirectServi
 
 const API_BASE_URL = '/api';
 
-// Token and session storage keys
-const TOKEN_KEY = 'skillvouch_token';
+// Session storage key
 const SESSION_KEY = 'skillvouch_session';
 
 // Helper to simulate delay
@@ -32,30 +31,14 @@ const generateId = (): string => {
   });
 };
 
-// Get auth headers with token
-const getAuthHeaders = (): HeadersInit => {
-  const token = localStorage.getItem(TOKEN_KEY);
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-  };
-};
+// Simple headers without auth
+const getHeaders = (): HeadersInit => ({
+  'Content-Type': 'application/json'
+});
 
 export const apiService = {
 
-  // --- TOKEN & SESSION ---
-  getToken: (): string | null => {
-    return localStorage.getItem(TOKEN_KEY);
-  },
-
-  setToken: (token: string) => {
-    localStorage.setItem(TOKEN_KEY, token);
-  },
-
-  removeToken: () => {
-    localStorage.removeItem(TOKEN_KEY);
-  },
-
+  // --- SESSION ---
   getCurrentSession: (): User | null => {
     try {
       const stored = localStorage.getItem(SESSION_KEY);
@@ -68,20 +51,19 @@ export const apiService = {
   },
 
   logout: async () => {
-    apiService.removeToken();
     localStorage.removeItem(SESSION_KEY);
   },
 
-  // Check if user is authenticated
+  // Check if user is logged in
   isAuthenticated: (): boolean => {
-    return !!apiService.getToken();
+    return !!apiService.getCurrentSession();
   },
 
   // --- AUTHENTICATION ---
-  login: async (email: string, password: string): Promise<{ user: User; token: string }> => {
+  login: async (email: string, password: string): Promise<User> => {
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getHeaders(),
       body: JSON.stringify({ email, password })
     });
 
@@ -95,17 +77,15 @@ export const apiService = {
       throw new Error(data.error || 'Login failed');
     }
 
-    // Save token and user
-    apiService.setToken(data.token);
+    // Save user to session (no token)
     apiService.setSession(data.user);
-
-    return { user: data.user, token: data.token };
+    return data.user;
   },
 
-  signup: async (name: string, email: string, password: string): Promise<{ user: User; token: string }> => {
+  signup: async (name: string, email: string, password: string): Promise<User> => {
     const response = await fetch(`${API_BASE_URL}/auth/signup`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getHeaders(),
       body: JSON.stringify({ name, email, password })
     });
 
@@ -119,17 +99,15 @@ export const apiService = {
       throw new Error(data.error || 'Signup failed');
     }
 
-    // Save token and user
-    apiService.setToken(data.token);
+    // Save user to session (no token)
     apiService.setSession(data.user);
-
-    return { user: data.user, token: data.token };
+    return data.user;
   },
 
   // --- USER PROFILE ---
   getUserProfile: async (): Promise<User> => {
     const response = await fetch(`${API_BASE_URL}/user/me`, {
-      headers: getAuthHeaders()
+      headers: getHeaders()
     });
 
     if (!response.ok) throw new Error('Failed to fetch user profile');
@@ -145,7 +123,7 @@ export const apiService = {
   updateUserProfile: async (updates: Partial<User>): Promise<User> => {
     const response = await fetch(`${API_BASE_URL}/user/update`, {
       method: 'PUT',
-      headers: getAuthHeaders(),
+      headers: getHeaders(),
       body: JSON.stringify(updates)
     });
 
@@ -162,7 +140,7 @@ export const apiService = {
   addSkill: async (skill: string): Promise<string[]> => {
     const response = await fetch(`${API_BASE_URL}/user/add-skill`, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: getHeaders(),
       body: JSON.stringify({ skill })
     });
 
@@ -174,7 +152,7 @@ export const apiService = {
   addLearningGoal: async (goal: string): Promise<string[]> => {
     const response = await fetch(`${API_BASE_URL}/user/add-learning-goal`, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: getHeaders(),
       body: JSON.stringify({ goal })
     });
 
@@ -187,7 +165,7 @@ export const apiService = {
   sendMessage: async (receiverId: string, content: string): Promise<Message> => {
     const response = await fetch(`${API_BASE_URL}/messages/send`, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: getHeaders(),
       body: JSON.stringify({ receiverId, content })
     });
 
@@ -198,7 +176,7 @@ export const apiService = {
 
   getMessages: async (userId: string): Promise<Message[]> => {
     const response = await fetch(`${API_BASE_URL}/messages?userId=${userId}`, {
-      headers: getAuthHeaders()
+      headers: getHeaders()
     });
 
     if (!response.ok) throw new Error('Failed to fetch messages');
@@ -208,7 +186,7 @@ export const apiService = {
 
   getUnreadCount: async (): Promise<number> => {
     const response = await fetch(`${API_BASE_URL}/messages/unread`, {
-      headers: getAuthHeaders()
+      headers: getHeaders()
     });
 
     if (!response.ok) return 0;
@@ -219,7 +197,7 @@ export const apiService = {
   markAsRead: async (senderId: string): Promise<void> => {
     const response = await fetch(`${API_BASE_URL}/messages/read`, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: getHeaders(),
       body: JSON.stringify({ senderId })
     });
 
@@ -228,7 +206,7 @@ export const apiService = {
 
   getConversations: async (): Promise<string[]> => {
     const response = await fetch(`${API_BASE_URL}/messages/conversations`, {
-      headers: getAuthHeaders()
+      headers: getHeaders()
     });
 
     if (!response.ok) throw new Error('Failed to fetch conversations');
@@ -240,7 +218,7 @@ export const apiService = {
   submitQuiz: async (subjectName: string, score: number): Promise<any> => {
     const response = await fetch(`${API_BASE_URL}/quiz/submit`, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: getHeaders(),
       body: JSON.stringify({ subjectName, score })
     });
 
@@ -251,7 +229,7 @@ export const apiService = {
 
   getQuizProgress: async (): Promise<any> => {
     const response = await fetch(`${API_BASE_URL}/quiz/progress`, {
-      headers: getAuthHeaders()
+      headers: getHeaders()
     });
 
     if (!response.ok) throw new Error('Failed to fetch quiz progress');
@@ -262,7 +240,7 @@ export const apiService = {
   addSubjectToLearn: async (subject: string): Promise<string[]> => {
     const response = await fetch(`${API_BASE_URL}/quiz/add-subject`, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: getHeaders(),
       body: JSON.stringify({ subject })
     });
 
@@ -274,7 +252,7 @@ export const apiService = {
   generateQuiz: async (skill: string, difficulty: string) => {
     const response = await fetch('/api/quiz/generate', {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: getHeaders(),
       body: JSON.stringify({ skillName: skill, difficulty })
     });
 
@@ -286,7 +264,7 @@ export const apiService = {
   generateRoadmap: async (skills: string[], learningGoals: string[]): Promise<any[]> => {
     const response = await fetch(`${API_BASE_URL}/ai/roadmap`, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: getHeaders(),
       body: JSON.stringify({ skills, learningGoals })
     });
 
@@ -298,7 +276,7 @@ export const apiService = {
   aiChat: async (message: string): Promise<string> => {
     const response = await fetch(`${API_BASE_URL}/ai/chat`, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: getHeaders(),
       body: JSON.stringify({ message })
     });
 
@@ -309,7 +287,7 @@ export const apiService = {
 
   getChatHistory: async (): Promise<any[]> => {
     const response = await fetch(`${API_BASE_URL}/ai/chat-history`, {
-      headers: getAuthHeaders()
+      headers: getHeaders()
     });
 
     if (!response.ok) throw new Error('Failed to fetch chat history');
@@ -321,7 +299,7 @@ export const apiService = {
   createExchangeRequest: async (request: ExchangeRequest) => {
     const response = await fetch(`${API_BASE_URL}/requests`, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: getHeaders(),
       body: JSON.stringify(request)
     });
 
@@ -330,7 +308,7 @@ export const apiService = {
 
   getRequestsForUser: async (userId: string): Promise<ExchangeRequest[]> => {
     const response = await fetch(`${API_BASE_URL}/requests?userId=${userId}`, {
-      headers: getAuthHeaders()
+      headers: getHeaders()
     });
 
     if (!response.ok) throw new Error('Failed to fetch requests');
@@ -340,7 +318,7 @@ export const apiService = {
   updateExchangeRequestStatus: async (id: string, status: ExchangeRequest['status']) => {
     const response = await fetch(`${API_BASE_URL}/requests/${id}/status`, {
       method: 'PUT',
-      headers: getAuthHeaders(),
+      headers: getHeaders(),
       body: JSON.stringify({ status })
     });
 
@@ -352,7 +330,7 @@ export const apiService = {
   submitExchangeFeedback: async (feedback: Omit<ExchangeFeedback, 'id' | 'createdAt'> & Partial<Pick<ExchangeFeedback, 'id' | 'createdAt'>>): Promise<ExchangeFeedback> => {
     const response = await fetch(`${API_BASE_URL}/feedback`, {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: getHeaders(),
       body: JSON.stringify(feedback)
     });
 
@@ -362,7 +340,7 @@ export const apiService = {
 
   getReceivedFeedback: async (userId: string): Promise<ExchangeFeedback[]> => {
     const response = await fetch(`${API_BASE_URL}/feedback/received?userId=${userId}`, {
-      headers: getAuthHeaders()
+      headers: getHeaders()
     });
 
     if (!response.ok) throw new Error('Failed to fetch feedback');
@@ -371,7 +349,7 @@ export const apiService = {
 
   getFeedbackStats: async (userId: string): Promise<{ avgStars: number; count: number }> => {
     const response = await fetch(`${API_BASE_URL}/feedback/stats?userId=${userId}`, {
-      headers: getAuthHeaders()
+      headers: getHeaders()
     });
 
     if (!response.ok) throw new Error('Failed to fetch feedback stats');
@@ -399,9 +377,11 @@ export const apiService = {
 
 // Initialize: Check if user is logged in on app load
 export const initializeAuth = async (): Promise<User | null> => {
-  if (!apiService.isAuthenticated()) return null;
+  const session = apiService.getCurrentSession();
+  if (!session) return null;
   
   try {
+    // Optionally refresh user data from server
     const user = await apiService.getUserProfile();
     return user;
   } catch (error) {

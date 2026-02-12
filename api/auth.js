@@ -1,13 +1,12 @@
 import connectDB from '../lib/mongodb.js';
 import User from '../models/User.js';
-import { generateToken } from '../lib/auth.js';
 import crypto from 'crypto';
 
 export default async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
     res.status(200).end();
@@ -45,7 +44,7 @@ export default async function handler(req, res) {
         id: userId,
         name: name.trim(),
         email: email.trim().toLowerCase(),
-        password: password, // Will be hashed by pre-save hook
+        password: password, // Plain text for now (no bcrypt)
         avatar: avatarUrl,
         bio: '',
         skills: [],
@@ -63,9 +62,7 @@ export default async function handler(req, res) {
       });
 
       await newUser.save();
-
-      // Generate token
-      const token = generateToken(userId);
+      console.log('✅ User saved:', newUser.id, newUser.email);
 
       // Return user without password
       const userResponse = {
@@ -91,7 +88,6 @@ export default async function handler(req, res) {
       return res.status(201).json({
         success: true,
         message: 'User created successfully',
-        token,
         user: userResponse
       });
     }
@@ -116,9 +112,8 @@ export default async function handler(req, res) {
         });
       }
 
-      // Compare passwords
-      const isMatch = await user.comparePassword(password);
-      if (!isMatch) {
+      // Simple password check (no bcrypt)
+      if (user.password !== password) {
         return res.status(401).json({ 
           success: false, 
           error: 'Invalid email or password' 
@@ -128,9 +123,6 @@ export default async function handler(req, res) {
       // Update last login
       user.lastLogin = new Date();
       await user.save();
-
-      // Generate token
-      const token = generateToken(user.id);
 
       // Return user without password
       const userResponse = {
@@ -156,7 +148,6 @@ export default async function handler(req, res) {
       return res.status(200).json({
         success: true,
         message: 'Login successful',
-        token,
         user: userResponse
       });
     }
