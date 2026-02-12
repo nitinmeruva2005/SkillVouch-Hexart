@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema({
   id: {
@@ -13,7 +14,7 @@ const userSchema = new mongoose.Schema({
   },
   email: {
     type: String,
-    required: [true, 'Email is required'],
+    required: true,
     unique: true,
     lowercase: true,
     trim: true,
@@ -25,7 +26,7 @@ const userSchema = new mongoose.Schema({
   },
   avatar: {
     type: String,
-    required: true
+    default: ''
   },
   bio: {
     type: String,
@@ -35,19 +36,70 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null
   },
-  skillsKnown: {
-    type: [mongoose.Schema.Types.Mixed],
-    default: []
-  },
-  skillsToLearn: {
-    type: [mongoose.Schema.Types.Mixed],
-    default: []
+  skills: [{
+    type: String,
+    trim: true
+  }],
+  skillsKnown: [{
+    type: String,
+    trim: true
+  }],
+  skillsToLearn: [{
+    type: String,
+    trim: true
+  }],
+  learningGoals: [{
+    type: String,
+    trim: true
+  }],
+  subjectsCompleted: [{
+    type: String,
+    trim: true
+  }],
+  subjectsToLearn: [{
+    type: String,
+    trim: true
+  }],
+  reputationScore: {
+    type: Number,
+    default: 0,
+    min: 0
   },
   rating: {
     type: Number,
-    default: 0,
+    default: 5.0,
     min: 0,
     max: 5
+  },
+  quizProgress: {
+    type: Map,
+    of: {
+      score: { type: Number, default: 0 },
+      attempts: { type: Number, default: 0 },
+      lastAttempt: { type: Date, default: null }
+    },
+    default: {}
+  },
+  roadmap: [{
+    step: { type: Number, required: true },
+    title: { type: String, required: true },
+    description: { type: String, required: true },
+    duration: { type: String, required: true },
+    resources: [{ type: String }],
+    completed: { type: Boolean, default: false }
+  }],
+  messages: [{
+    role: { type: String, enum: ['user', 'assistant'], required: true },
+    content: { type: String, required: true },
+    timestamp: { type: Date, default: Date.now }
+  }],
+  requests: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ExchangeRequest'
+  }],
+  lastLogin: {
+    type: Date,
+    default: Date.now
   }
 }, {
   timestamps: true,
@@ -56,9 +108,28 @@ const userSchema = new mongoose.Schema({
       ret.id = ret._id;
       delete ret._id;
       delete ret.__v;
+      delete ret.password; // Never return password
       return ret;
     }
   }
 });
+
+// Hash password before saving
+userSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Method to compare passwords
+userSchema.methods.comparePassword = async function(candidatePassword) {
+  return bcrypt.compare(candidatePassword, this.password);
+};
 
 export default mongoose.models.User || mongoose.model('User', userSchema);
