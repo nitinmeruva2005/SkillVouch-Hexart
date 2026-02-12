@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "routes": [
+    { "src": "/api/auth/(.*)", "dest": "/api/auth.js" },
+    { "src": "/api/users/(.*)", "dest": "/api/users.js" },
+    { "src": "/api/user/(.*)", "dest": "/api/users.js" },
+    { "src": "/api/messages/(.*)", "dest": "/api/messages.js" },
+    { "src": "/api/conversations/(.*)", "dest": "/api/conversations.js" },
+    { "src": "/api/requests/(.*)", "dest": "/api/requests.js" },
+    { "src": "/api/feedback/(.*)", "dest": "/api/feedback.js" },
+    { "src": "/api/quiz/(.*)", "dest": "/api/quiz.js" },
+    { "src": "/api/ai/(.*)", "dest": "/api/ai.js" },
+    { "src": "/api/health", "dest": "/api/health.js" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET,POST,PUT,DELETE,OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
+      ]
+    }
+  ]
+}
