@@ -28,21 +28,36 @@ export default async function handler(req, res) {
       });
     }
 
-    if (req.method === 'GET' && req.params.id) {
-      // Get user by ID
-      const user = await User.findOne({ id: req.params.id });
+    if (req.method === 'POST') {
+      // Create new user
+      const userData = req.body || {};
       
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-      }
+      const user = new User({
+        id: userData.id || crypto.randomUUID(),
+        name: userData.name,
+        email: userData.email,
+        password: userData.password,
+        avatar: userData.avatar,
+        bio: userData.bio || '',
+        discordLink: userData.discordLink,
+        skillsKnown: userData.skillsKnown || [],
+        skillsToLearn: userData.skillsToLearn || [],
+        rating: userData.rating || 5.0
+      });
       
-      return res.status(200).json(user);
+      await user.save();
+      
+      return res.status(201).json({ success: true, data: user });
     }
 
     if (req.method === 'PUT') {
       // Update or create user
-      const { id } = req.params;
       const userData = req.body || {};
+      const id = userData.id;
+      
+      if (!id) {
+        return res.status(400).json({ error: 'User id is required in request body' });
+      }
       
       const user = await User.findOneAndUpdate(
         { id },
@@ -60,7 +75,7 @@ export default async function handler(req, res) {
         { upsert: true, new: true }
       );
       
-      return res.status(200).json(user);
+      return res.status(200).json({ success: true, data: user });
     }
 
     // Method not allowed
