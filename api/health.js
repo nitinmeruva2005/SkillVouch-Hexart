@@ -1,4 +1,5 @@
-import mysql from 'mysql2/promise';
+import connectDB from '../lib/mongodb.js';
+import mongoose from 'mongoose';
 
 export default async function handler(req, res) {
   // Enable CORS
@@ -15,47 +16,32 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  let connection;
-  
   try {
-    const databaseUrl = process.env.DATABASE_URL;
-    let connectionConfig;
-
-    if (databaseUrl) {
-      const url = new URL(databaseUrl);
-      connectionConfig = {
-        host: url.hostname,
-        port: url.port || 3306,
-        user: url.username,
-        password: url.password,
-        database: url.pathname.substring(1),
-        ssl: { rejectUnauthorized: false }
-      };
-    } else {
-      connectionConfig = {
-        host: process.env.MYSQL_HOST || 'localhost',
-        port: parseInt(process.env.MYSQL_PORT) || 3306,
-        user: process.env.MYSQL_USER || 'root',
-        password: process.env.MYSQL_PASSWORD || '',
-        database: process.env.MYSQL_DATABASE || 'skillvouch',
-        ssl: process.env.MYSQL_HOST?.includes('railway.app') || 
-              process.env.MYSQL_HOST?.includes('planetscale') ||
-              process.env.MYSQL_HOST?.includes('clever-cloud.com')
-          ? { rejectUnauthorized: false } 
-          : false
-      };
-    }
-
-    connection = await mysql.createConnection(connectionConfig);
-    await connection.ping();
-
-    const [rows] = await connection.execute('SELECT 1 as test');
+    // Connect to MongoDB
+    await connectDB();
+    
+    // Test database connection
+    const state = mongoose.connection.readyState;
+    const states = {
+      0: 'disconnected',
+      1: 'connected',
+      2: 'connecting',
+      3: 'disconnecting'
+    };
+    
+    // Get database stats
+    const db = mongoose.connection.db;
+    const stats = await db.stats();
     
     res.status(200).json({ 
       success: true, 
-      message: 'Database connection successful',
-      database: connectionConfig.database,
-      host: connectionConfig.host,
+      message: 'MongoDB connection successful',
+      database: db.databaseName,
+      connectionState: states[state],
+      collections: stats.collections,
+      objects: stats.objects,
+      dataSize: stats.dataSize,
+      storageSize: stats.storageSize,
       timestamp: new Date().toISOString()
     });
 
@@ -63,18 +49,9 @@ export default async function handler(req, res) {
     console.error('Health check error:', error);
     res.status(500).json({ 
       success: false, 
-      error: 'Database connection failed',
+      error: 'MongoDB connection failed',
       details: error.message,
-      code: error.code,
-      errno: error.errno
+      code: error.code
     });
-  } finally {
-    if (connection) {
-      try {
-        await connection.end();
-      } catch (closeError) {
-        console.error('Error closing connection:', closeError);
-      }
-    }
   }
 }
