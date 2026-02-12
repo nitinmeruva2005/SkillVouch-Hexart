@@ -13,10 +13,11 @@ const userSchema = new mongoose.Schema({
   },
   email: {
     type: String,
-    required: true,
+    required: [true, 'Email is required'],
     unique: true,
     lowercase: true,
-    trim: true
+    trim: true,
+    match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email']
   },
   password: {
     type: String,
@@ -59,9 +60,5 @@ const userSchema = new mongoose.Schema({
     }
   }
 });
-
-// Create indexes for better performance
-userSchema.index({ email: 1 });
-userSchema.index({ id: 1 });
 
 export default mongoose.models.User || mongoose.model('User', userSchema);

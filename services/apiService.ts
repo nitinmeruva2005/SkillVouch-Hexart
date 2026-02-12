@@ -52,10 +52,11 @@ export const apiService = {
 
   // --- USER MGMT ---
   getUsers: async (): Promise<User[]> => {
-    await delay(50); // Reduced from 300ms
+    await delay(50);
     const response = await fetch(`${API_BASE_URL}/users`);
     if (!response.ok) throw new Error('Failed to fetch users');
-    return response.json();
+    const result = await response.json();
+    return result.data || []; // Extract data array from response
   },
 
   getUserById: async (id: string): Promise<User | undefined> => {
