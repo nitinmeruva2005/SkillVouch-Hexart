@@ -154,11 +154,7 @@ This project is designed to work on:
 5. **Configure database environment variables:**
    ```bash
    # Edit backend/.env and add your database credentials:
-   MYSQL_HOST=localhost
-   MYSQL_PORT=3306
-   MYSQL_USER=root
-   MYSQL_PASSWORD=your-password
-   MYSQL_DATABASE=skillvouch
+   
    ```
 
 6. **Run the application:**
@@ -217,11 +213,7 @@ git push origin main
 VITE_MISTRAL_API_KEY=your-mistral-api-key-here
 
 # Backend Variables
-MYSQL_HOST=your-mysql-host
-MYSQL_PORT=3306
-MYSQL_USER=your-mysql-user
-MYSQL_PASSWORD=your-mysql-password
-MYSQL_DATABASE=skillvouch
+
 MISTRAL_API_KEY=your-mistral-api-key-here
 ```
 
