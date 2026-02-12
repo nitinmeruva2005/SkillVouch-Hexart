@@ -17,6 +17,10 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
+  // Add SSL for Railway/production environments
+  ssl: process.env.MYSQL_HOST?.includes('railway.app') ? {
+    rejectUnauthorized: false
+  } : false
 });
 
 async function query(sql, params) {
