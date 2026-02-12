@@ -1,4 +1,5 @@
-import mysql from 'mysql2/promise';
+import connectDB from '../lib/mongodb.js';
+import Quiz from '../models/Quiz.js';
 
 export default async function handler(req, res) {
   // Enable CORS
@@ -12,83 +13,8 @@ export default async function handler(req, res) {
     return;
   }
 
-  let connection;
-  
   try {
-    // Parse DATABASE_URL or use individual environment variables
-    const databaseUrl = process.env.DATABASE_URL;
-    let connectionConfig;
-
-    if (databaseUrl) {
-      const url = new URL(databaseUrl);
-      connectionConfig = {
-        host: url.hostname,
-        port: url.port || 3306,
-        user: url.username,
-        password: url.password,
-        database: url.pathname.substring(1),
-        ssl: { rejectUnauthorized: false }
-      };
-    } else {
-      connectionConfig = {
-        host: process.env.MYSQL_HOST || 'localhost',
-        port: parseInt(process.env.MYSQL_PORT) || 3306,
-        user: process.env.MYSQL_USER || 'root',
-        password: process.env.MYSQL_PASSWORD || '',
-        database: process.env.MYSQL_DATABASE || 'skillvouch',
-        ssl: process.env.MYSQL_HOST?.includes('railway.app') || 
-              process.env.MYSQL_HOST?.includes('planetscale') ||
-              process.env.MYSQL_HOST?.includes('clever-cloud.com')
-          ? { rejectUnauthorized: false } 
-          : false
-      };
-    }
-
-    connection = await mysql.createConnection(connectionConfig);
-    await connection.ping();
-
-    // Create tables if they don't exist
-    await connection.execute(`
-      CREATE TABLE IF NOT EXISTS users (
-        id VARCHAR(64) PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        email VARCHAR(255) NOT NULL UNIQUE,
-        password VARCHAR(255) NOT NULL,
-        avatar TEXT NOT NULL,
-        bio TEXT NOT NULL,
-        discord_link VARCHAR(255) NULL,
-        skills_known TEXT NOT NULL,
-        skills_to_learn TEXT NOT NULL,
-        rating FLOAT NOT NULL DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-      )
-    `);
-
-    await connection.execute(`
-      CREATE TABLE IF NOT EXISTS quizzes (
-        id VARCHAR(64) PRIMARY KEY,
-        skill_name VARCHAR(255) NOT NULL,
-        questions TEXT NOT NULL,
-        difficulty ENUM('beginner', 'intermediate', 'advanced') DEFAULT 'beginner',
-        created_at BIGINT NOT NULL,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-      )
-    `);
-
-    await connection.execute(`
-      CREATE TABLE IF NOT EXISTS quiz_attempts (
-        id VARCHAR(64) PRIMARY KEY,
-        user_id VARCHAR(64) NOT NULL,
-        quiz_id VARCHAR(64) NOT NULL,
-        answers TEXT NOT NULL,
-        score INT NOT NULL,
-        completed_at BIGINT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id),
-        FOREIGN KEY (quiz_id) REFERENCES quizzes(id)
-      )
-    `);
+    await connectDB();
 
     if (req.method === 'POST') {
       // Generate quiz
@@ -127,10 +53,15 @@ export default async function handler(req, res) {
       const quizId = `quiz_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
       // Store quiz in database
-      await connection.execute(
-        'INSERT INTO quizzes (id, skill_name, questions, difficulty, created_at) VALUES (?, ?, ?, ?, ?)',
-        [quizId, skillName, JSON.stringify(quizQuestions), difficulty, Date.now()]
-      );
+      const quiz = new Quiz({
+        id: quizId,
+        skillName,
+        questions: quizQuestions,
+        difficulty,
+        createdAt: Date.now(),
+      });
+      
+      await quiz.save();
 
       res.status(201).json({
         success: true,
@@ -142,33 +73,27 @@ export default async function handler(req, res) {
 
     } else if (req.method === 'GET') {
       // Get quizzes
-      const { userId, skillName } = req.query;
+      const { skillName } = req.query;
       
-      let query = 'SELECT * FROM quizzes';
-      let params = [];
-      
+      let query = {};
       if (skillName) {
-        query += ' WHERE skill_name = ?';
-        params.push(skillName);
+        query.skillName = skillName;
       }
       
-      query += ' ORDER BY created_at DESC';
+      const quizzes = await Quiz.find(query).sort({ createdAt: -1 });
       
-      const [rows] = await connection.execute(query, params);
-      
-      const quizzes = rows.map(row => ({
+      const mapped = quizzes.map(row => ({
         id: row.id,
-        skillName: row.skill_name,
-        questions: JSON.parse(row.questions),
+        skillName: row.skillName,
+        questions: row.questions,
         difficulty: row.difficulty,
-        createdAt: parseInt(row.created_at),
-        updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : null
+        createdAt: row.createdAt,
       }));
 
       res.status(200).json({
         success: true,
-        data: quizzes,
-        count: quizzes.length
+        data: mapped,
+        count: mapped.length
       });
     }
 
@@ -180,13 +105,5 @@ export default async function handler(req, res) {
       details: error.message,
       code: error.code
     });
-  } finally {
-    if (connection) {
-      try {
-        await connection.end();
-      } catch (closeError) {
-        console.error('Error closing connection:', closeError);
-      }
-    }
   }
 }

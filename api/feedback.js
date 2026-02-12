@@ -1,4 +1,6 @@
-import mysql from 'mysql2/promise';
+import connectDB from '../lib/mongodb.js';
+import Feedback from '../models/Feedback.js';
+import User from '../models/User.js';
 import crypto from 'crypto';
 
 export default async function handler(req, res) {
@@ -11,56 +13,8 @@ export default async function handler(req, res) {
     return;
   }
 
-  let connection;
-  
   try {
-    const databaseUrl = process.env.DATABASE_URL;
-    let connectionConfig;
-
-    if (databaseUrl) {
-      const url = new URL(databaseUrl);
-      connectionConfig = {
-        host: url.hostname,
-        port: url.port || 3306,
-        user: url.username,
-        password: url.password,
-        database: url.pathname.substring(1),
-        ssl: { rejectUnauthorized: false }
-      };
-    } else {
-      connectionConfig = {
-        host: process.env.MYSQL_HOST || 'localhost',
-        port: parseInt(process.env.MYSQL_PORT) || 3306,
-        user: process.env.MYSQL_USER || 'root',
-        password: process.env.MYSQL_PASSWORD || '',
-        database: process.env.MYSQL_DATABASE || 'skillvouch',
-        ssl: process.env.MYSQL_HOST?.includes('railway.app') || 
-              process.env.MYSQL_HOST?.includes('planetscale') ||
-              process.env.MYSQL_HOST?.includes('clever-cloud.com')
-          ? { rejectUnauthorized: false } 
-          : false
-      };
-    }
-
-    connection = await mysql.createConnection(connectionConfig);
-    await connection.ping();
-
-    // Create tables if they don't exist
-    await connection.execute(`
-      CREATE TABLE IF NOT EXISTS exchange_feedback (
-        id VARCHAR(64) PRIMARY KEY,
-        request_id VARCHAR(64) NOT NULL,
-        from_user_id VARCHAR(64) NOT NULL,
-        to_user_id VARCHAR(64) NOT NULL,
-        stars INT NOT NULL,
-        comment TEXT NULL,
-        created_at BIGINT NOT NULL,
-        UNIQUE KEY uniq_feedback_per_request_per_user (request_id, from_user_id),
-        FOREIGN KEY (request_id) REFERENCES exchange_requests(id),
-        FOREIGN KEY (from_user_id) REFERENCES users(id),
-        FOREIGN KEY (to_user_id) REFERENCES users(id)
-      )
-    `);
+    await connectDB();
 
     if (req.method === 'POST') {
       // Submit feedback
@@ -75,36 +29,43 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'stars must be between 1 and 5' });
       }
 
-      const feedbackId = f.id || crypto.randomUUID();
       const createdAt = f.createdAt || Date.now();
 
-      await connection.execute(
-        `INSERT INTO exchange_feedback (id, request_id, from_user_id, to_user_id, stars, comment, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE
-           stars = VALUES(stars),
-           comment = VALUES(comment),
-           created_at = VALUES(created_at)`,
-        [feedbackId, f.requestId, f.fromUserId, f.toUserId, stars, f.comment || null, createdAt]
+      // Upsert feedback
+      const feedback = await Feedback.findOneAndUpdate(
+        { requestId: f.requestId, fromUserId: f.fromUserId },
+        {
+          id: f.id || crypto.randomUUID(),
+          requestId: f.requestId,
+          fromUserId: f.fromUserId,
+          toUserId: f.toUserId,
+          stars,
+          comment: f.comment || null,
+          createdAt,
+        },
+        { upsert: true, new: true }
       );
 
       // Update user rating
-      const [avgRows] = await connection.execute(
-        'SELECT AVG(stars) AS avgStars FROM exchange_feedback WHERE to_user_id = ?',
-        [f.toUserId]
-      );
+      const avgResult = await Feedback.aggregate([
+        { $match: { toUserId: f.toUserId } },
+        { $group: { _id: null, avgStars: { $avg: '$stars' } } }
+      ]);
       
-      const avgStars = avgRows?.[0]?.avgStars != null ? Number(avgRows[0].avgStars) : 0;
-      await connection.execute('UPDATE users SET rating = ? WHERE id = ?', [avgStars, f.toUserId]);
+      const avgStars = avgResult.length > 0 ? avgResult[0].avgStars : 0;
+      await User.findOneAndUpdate(
+        { id: f.toUserId },
+        { rating: avgStars }
+      );
 
       res.status(201).json({ 
-        id: feedbackId, 
-        requestId: f.requestId, 
-        fromUserId: f.fromUserId, 
-        toUserId: f.toUserId, 
-        stars, 
-        comment: f.comment || undefined, 
-        createdAt 
+        id: feedback.id, 
+        requestId: feedback.requestId, 
+        fromUserId: feedback.fromUserId, 
+        toUserId: feedback.toUserId, 
+        stars: feedback.stars, 
+        comment: feedback.comment || undefined, 
+        createdAt: feedback.createdAt 
       });
 
     } else if (req.method === 'GET') {
@@ -117,34 +78,36 @@ export default async function handler(req, res) {
 
       if (type === 'received') {
         // Get received feedback
-        const [rows] = await connection.execute(
-          `SELECT * FROM exchange_feedback
-           WHERE to_user_id = ?
-           ORDER BY created_at DESC`,
-          [userId]
-        );
+        const feedbacks = await Feedback.find({ toUserId: userId })
+          .sort({ createdAt: -1 });
 
-        const mapped = rows.map((row) => ({
+        const mapped = feedbacks.map((row) => ({
           id: row.id,
-          requestId: row.request_id,
-          fromUserId: row.from_user_id,
-          toUserId: row.to_user_id,
-          stars: Number(row.stars),
+          requestId: row.requestId,
+          fromUserId: row.fromUserId,
+          toUserId: row.toUserId,
+          stars: row.stars,
           comment: row.comment || undefined,
-          createdAt: Number(row.created_at),
+          createdAt: row.createdAt,
         }));
 
         res.json(mapped);
 
       } else if (type === 'stats') {
         // Get feedback stats
-        const [rows] = await connection.execute(
-          'SELECT AVG(stars) AS avgStars, COUNT(*) AS cnt FROM exchange_feedback WHERE to_user_id = ?',
-          [userId]
-        );
+        const stats = await Feedback.aggregate([
+          { $match: { toUserId: userId } },
+          { 
+            $group: { 
+              _id: null, 
+              avgStars: { $avg: '$stars' },
+              count: { $sum: 1 }
+            } 
+          }
+        ]);
         
-        const avgStars = rows?.[0]?.avgStars != null ? Number(rows[0].avgStars) : 0;
-        const count = rows?.[0]?.cnt != null ? Number(rows[0].cnt) : 0;
+        const avgStars = stats.length > 0 ? stats[0].avgStars : 0;
+        const count = stats.length > 0 ? stats[0].count : 0;
         
         res.json({ avgStars, count });
       }
@@ -157,13 +120,5 @@ export default async function handler(req, res) {
       error: 'Feedback operation failed',
       details: error.message
     });
-  } finally {
-    if (connection) {
-      try {
-        await connection.end();
-      } catch (closeError) {
-        console.error('Error closing connection:', closeError);
-      }
-    }
   }
 }
