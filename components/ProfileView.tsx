@@ -252,7 +252,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, onUpdateUser }) 
                         <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">Discord Link</label>
                         {isEditing ? (
                             <input
-                                type="url"
+                                type="text"
                                 value={formData.discordLink}
                                 onChange={(e) => setFormData({ ...formData, discordLink: e.target.value })}
                                 className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500"
