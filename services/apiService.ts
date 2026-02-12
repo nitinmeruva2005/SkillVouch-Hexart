@@ -124,6 +124,7 @@ export const apiService = {
     };
 
     await apiService.saveUser(newUser);
+    apiService.setSession(newUser);  // Set session after signup
     return newUser;
   },
 
