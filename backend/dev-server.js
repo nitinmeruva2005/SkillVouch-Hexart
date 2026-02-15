@@ -30,6 +30,7 @@ app.use((req, res, next) => {
 
 // Import API routes
 import authHandler from './api/auth.js';
+import meHandler from './api/me.js';
 import usersHandler from './api/users.js';
 import messagesHandler from './api/messages.js';
 import conversationsHandler from './api/conversations.js';
@@ -42,6 +43,8 @@ import healthHandler from './api/health.js';
 // API Routes - Direct mapping
 app.post('/api/auth/signup', (req, res) => authHandler(req, res));
 app.post('/api/auth/login', (req, res) => authHandler(req, res));
+app.get('/api/me', (req, res) => meHandler(req, res));
+app.put('/api/me', (req, res) => meHandler(req, res));
 app.get('/api/users', (req, res) => usersHandler(req, res));
 app.put('/api/users', (req, res) => usersHandler(req, res));
 app.get('/api/messages', (req, res) => messagesHandler(req, res));

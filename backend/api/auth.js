@@ -1,12 +1,13 @@
 import connectDB from '../lib/mongodb.js';
 import User from '../models/User.js';
+import { generateToken } from '../lib/auth.js';
 import crypto from 'crypto';
 
 export default async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
     res.status(200).end();
@@ -20,10 +21,28 @@ export default async function handler(req, res) {
     if (req.method === 'POST' && req.url?.includes('/signup')) {
       const { name, email, password } = req.body || {};
 
+      // Validation
       if (!name || !email || !password) {
         return res.status(400).json({ 
           success: false, 
           message: 'Name, email, and password are required' 
+        });
+      }
+
+      // Email format validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid email format. Example: user@example.com'
+        });
+      }
+
+      // Password length validation
+      if (password.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: 'Password must be at least 6 characters long'
         });
       }
 
@@ -63,6 +82,9 @@ export default async function handler(req, res) {
       await newUser.save();
       console.log('✅ User saved to MongoDB:', newUser.id, newUser.email);
 
+      // Generate JWT token
+      const token = generateToken(newUser.id);
+
       // Return user without sensitive data
       const userResponse = {
         id: newUser.id,
@@ -74,6 +96,7 @@ export default async function handler(req, res) {
       return res.status(201).json({
         success: true,
         message: 'User registered successfully',
+        token,
         user: userResponse
       });
     }
@@ -111,6 +134,9 @@ export default async function handler(req, res) {
       user.lastLogin = new Date();
       await user.save();
 
+      // Generate JWT token
+      const token = generateToken(user.id);
+
       // Return user without sensitive data
       const userResponse = {
         id: user.id,
@@ -122,6 +148,7 @@ export default async function handler(req, res) {
       return res.status(200).json({
         success: true,
         message: 'Login successful',
+        token,
         user: userResponse
       });
     }
