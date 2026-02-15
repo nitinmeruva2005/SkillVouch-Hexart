@@ -145,8 +145,23 @@ export default function App() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError('');
+    
+    // Validation
     if (!fullName || !email || !password || !confirmPassword) {
       setAuthError('Please fill in all required fields.');
+      return;
+    }
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setAuthError('Invalid email format. Example: user@example.com');
+      return;
+    }
+
+    // Password length validation
+    if (password.length < 6) {
+      setAuthError('Password must be at least 6 characters long.');
       return;
     }
 
@@ -158,7 +173,6 @@ export default function App() {
     setIsSubmitting(true);
     try {
       // Create account but do NOT auto-login
-      // Removed location from signup
       await dbService.signup(fullName, email, password);
       
       // Redirect to Login view
@@ -170,7 +184,7 @@ export default function App() {
       setConfirmPassword('');
       
     } catch (err: any) {
-      setAuthError(err.message || 'Signup failed.');
+      setAuthError(err.message || 'Signup failed. Please try again.');
     } finally {
         setIsSubmitting(false);
     }
@@ -297,7 +311,7 @@ export default function App() {
           <h1 className="text-3xl font-bold text-center text-white mb-2">SkillVouch AI</h1>
           <p className="text-center text-slate-400 mb-8">Connect • Learn • Grow</p>
           
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4" noValidate>
             <div className="relative">
               <Mail className="absolute left-3 top-3.5 w-5 h-5 text-slate-500" />
               <input 
@@ -360,7 +374,7 @@ export default function App() {
           <h1 className="text-3xl font-bold text-center text-white mb-2">Create Account</h1>
           <p className="text-center text-slate-400 mb-8">Join the community of learners.</p>
           
-          <form onSubmit={handleSignup} className="space-y-4">
+          <form onSubmit={handleSignup} className="space-y-4" noValidate>
              <div className="relative">
               <UserIcon className="absolute left-3 top-3.5 w-5 h-5 text-slate-500" />
               <input 

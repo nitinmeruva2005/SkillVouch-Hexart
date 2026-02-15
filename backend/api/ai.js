@@ -1,6 +1,5 @@
 import connectDB from '../lib/mongodb.js';
 import User from '../models/User.js';
-import { authMiddleware } from '../lib/auth.js';
 import crypto from 'crypto';
 
 const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY || 'WCDEgp3sS6bERPYNBvhYvzFyT5UzVkdZ';
@@ -10,15 +9,15 @@ const MISTRAL_API_URL = 'https://api.mistral.ai/v1/chat/completions';
 async function generateRoadmap(req, res) {
   try {
     await connectDB();
-    const { skills, learningGoals } = req.body || {};
+    const { skillsKnown, learningGoals } = req.body || {};
 
-    if (!skills || !learningGoals) {
+    if (!skillsKnown || !learningGoals) {
       return res.status(400).json({ success: false, error: 'Skills and learning goals are required' });
     }
 
     const prompt = `Generate a personalized 6-8 step learning roadmap for a user with the following profile:
 
-Current Skills: ${skills.join(', ')}
+Current Skills: ${skillsKnown.join(', ')}
 Learning Goals: ${learningGoals.join(', ')}
 
 Return ONLY valid JSON in this exact format:
@@ -227,15 +226,15 @@ export default async function handler(req, res) {
   const { pathname } = new URL(req.url, `http://${req.headers.host}`);
 
   if (pathname === '/api/ai/roadmap' && req.method === 'POST') {
-    return authMiddleware(generateRoadmap)(req, res);
+    return generateRoadmap(req, res);
   }
 
   if (pathname === '/api/ai/chat' && req.method === 'POST') {
-    return authMiddleware(aiChat)(req, res);
+    return aiChat(req, res);
   }
 
   if (pathname === '/api/ai/chat-history' && req.method === 'GET') {
-    return authMiddleware(getChatHistory)(req, res);
+    return getChatHistory(req, res);
   }
 
   return res.status(404).json({ success: false, error: 'Endpoint not found' });

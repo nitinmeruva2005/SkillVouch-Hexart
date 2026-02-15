@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "rewrites": [
+    { "source": "/api/auth/:path*", "destination": "/api/auth.js" },
+    { "source": "/api/users/:path*", "destination": "/api/users.js" },
+    { "source": "/api/user/:path*", "destination": "/api/users.js" },
+    { "source": "/api/messages/:path*", "destination": "/api/messages.js" },
+    { "source": "/api/conversations/:path*", "destination": "/api/conversations.js" },
+    { "source": "/api/requests/:path*", "destination": "/api/requests.js" },
+    { "source": "/api/feedback/:path*", "destination": "/api/feedback.js" },
+    { "source": "/api/quiz/:path*", "destination": "/api/quiz.js" },
+    { "source": "/api/ai/:path*", "destination": "/api/ai.js" },
+    { "source": "/api/health", "destination": "/api/health.js" },
+    { "source": "/:path*", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET,POST,PUT,DELETE,OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type" }
+      ]
+    }
+  ]
+}
